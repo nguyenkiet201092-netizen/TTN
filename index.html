@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Người Anh Thương</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: radial-gradient(circle, #1a1a2e, #16213e, #0f3460);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            pointer-events: none; 
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #ff2e63;
+        }
+
+        #typing-text {
+            font-size: 1.1rem;
+            min-height: 1.5em;
+            color: #ff2e63;
+            font-weight: bold;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.8;
+            white-space: pre-wrap; /* Giữ các khoảng xuống dòng cho đẹp */
+        }
+
+        .heart {
+            position: relative;
+            width: 80px;
+            height: 70px;
+            margin: 20px auto;
+            animation: beat .8s infinite alternate;
+            transform-origin: center;
+        }
+
+        .heart:before,
+        .heart:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 40px;
+            height: 65px;
+            border-radius: 40px 40px 0 0;
+            background: #ff2e63;
+        }
+
+        .heart:before {
+            left: 40px;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+
+        .heart:after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+
+        @keyframes beat {
+            to { transform: scale(1.2); }
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <audio id="myAudio" loop>
+        <source src="TTN.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="heartCanvas"></canvas>
+
+    <div class="container">
+        <div class="heart"></div>
+        <h1 id="name">Gửi Em...</h1>
+        <p id="typing-text"></p>
+    </div>
+
+    <script>
+        const textElement = document.getElementById('typing-text');
+        // Nội dung mới bạn yêu cầu
+        const content = "Thật ra tớ để ý cậu lâu rồi, chỉ là không nói ra. Ở cậu có một cảm giác rất khác, kiểu khiến tớ muốn quan tâm nhiều hơn, muốn hỏi han mỗi ngày và muốn ở gần lâu dài. \n\nTớ thích cách cậu cười, cách cậu nói chuyện, và cả những lúc cậu im lặng nữa. Không phải ai cũng làm tớ rung động như vậy đâu. Với tớ, cậu không chỉ là người để nói chuyện cho vui, mà là người khiến tớ nghiêm túc nghĩ đến cảm xúc của mình ❤️";
+        let index = 0;
+
+        // 1. Hiệu ứng đánh chữ
+        function typeWriter() {
+            if (index < content.length) {
+                textElement.innerHTML += content.charAt(index);
+                index++;
+                setTimeout(typeWriter, 80); // Tốc độ đánh chữ (80ms mỗi ký tự)
+            }
+        }
+
+        // 2. Xử lý âm thanh
+        const audio = document.getElementById('myAudio');
+        function playMusic() {
+            audio.play().catch(e => console.log("Cần click để phát nhạc"));
+        }
+
+        // Phát nhạc ngay khi người dùng tương tác với màn hình
+        document.addEventListener('click', playMusic, { once: true });
+        document.addEventListener('touchstart', playMusic, { once: true });
+
+        // 3. Hiệu ứng hạt trái tim bay lơ lửng
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedY = Math.random() * 1.2 - 0.6;
+                this.speedX = Math.random() * 1.2 - 0.6;
+                this.color = '#ff2e63';
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // Khởi động khi tải trang xong
+        window.onload = () => {
+            init();
+            animate();
+            typeWriter();
+            playMusic();
+        };
+    </script>
+</body>
+</html>
